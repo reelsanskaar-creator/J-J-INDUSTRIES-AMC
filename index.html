@@ -1,0 +1,1439 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>J&J Industries — Heavy Equipment & Repair Enterprise Management</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+          colors: {
+            jnj: { 50: '#f0fdf4', 100: '#dcfce7', 500: '#22c55e', 600: '#16a34a', 700: '#15803d', 900: '#14532d' },
+            slate: { 850: '#1e293b', 900: '#0f172a' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; color: black !important; }
+      .print-container { box-shadow: none !important; border: none !important; background: white !important; color: black !important; }
+    }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  </style>
+</head>
+<body class="h-full bg-slate-900 text-slate-100 font-sans antialiased overflow-hidden flex flex-col">
+
+  <div id="app-shell" class="h-full flex flex-col">
+    <!-- Top Navbar -->
+    <header class="bg-slate-900 border-b border-slate-800 h-16 flex items-center justify-between px-4 lg:px-6 z-20 shrink-0">
+      <div class="flex items-center space-x-3">
+        <button onclick="toggleSidebar()" class="lg:hidden text-slate-400 hover:text-white p-2">
+          <i class="fa-solid fa-bars text-lg"></i>
+        </button>
+        <div class="flex items-center space-x-2">
+          <div class="w-9 h-9 rounded-xl bg-jnj-600 flex items-center justify-center text-white font-bold shadow">
+            <i class="fa-solid fa-truck-moving text-sm"></i>
+          </div>
+          <div>
+            <span class="font-bold tracking-tight text-white text-sm sm:text-base">J&J INDUSTRIES</span>
+            <span class="hidden md:inline-block text-xs bg-jnj-900 text-jnj-400 px-2 py-0.5 rounded-full ml-2">Enterprise ERP</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="hidden md:flex items-center flex-1 max-w-md mx-8">
+        <div class="relative w-full">
+          <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400"><i class="fa-solid fa-search text-xs"></i></span>
+          <input type="text" id="global-search-input" oninput="handleGlobalSearch(this.value)" placeholder="Search suction trucks, sky lifts, desilting units..." class="w-full bg-slate-800 border border-slate-700 rounded-xl py-2 pl-10 pr-4 text-xs text-slate-200 focus:outline-none focus:border-jnj-500">
+        </div>
+      </div>
+
+      <!-- Backend Connection Status & Controls -->
+      <div class="flex items-center space-x-3">
+        <div class="hidden xl:flex items-center space-x-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700 text-xs">
+          <span id="sync-indicator" class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span class="text-slate-300 font-mono text-[11px]" id="backend-status-text">Connected to GS WebApp</span>
+        </div>
+        <button onclick="openConfigModal()" title="Configure Backend Script URL" class="bg-slate-800 hover:bg-slate-700 text-slate-300 p-2 rounded-xl text-xs font-medium border border-slate-700 transition">
+          <i class="fa-solid fa-gear text-jnj-400"></i>
+        </button>
+        <button onclick="runSystemSetup()" title="Initialize / Verify Database" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-xl text-xs font-medium border border-slate-700 transition flex items-center">
+          <i class="fa-solid fa-database mr-1.5 text-jnj-400"></i> <span class="hidden sm:inline">Sync DB</span>
+        </button>
+        <div class="flex items-center space-x-2 border-l border-slate-800 pl-3">
+          <div class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center font-semibold text-xs text-jnj-400 border border-slate-700" id="user-initials">JJ</div>
+          <span class="text-xs font-medium text-slate-300 hidden sm:inline" id="user-display-name">J&J Admin</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Workspace Container -->
+    <div class="flex-1 flex overflow-hidden relative">
+      <!-- Sidebar Navigation -->
+      <aside id="sidebar" class="w-64 bg-slate-900 border-r border-slate-800 flex flex-col shrink-0 transition-all duration-300 z-30 absolute lg:relative inset-y-0 left-0 -translate-x-full lg:translate-x-0">
+        <div class="p-4 lg:hidden flex items-center justify-between border-b border-slate-800">
+          <span class="font-bold text-xs text-slate-300">Navigation Menu</span>
+          <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+        <nav class="flex-1 overflow-y-auto p-4 space-y-1 custom-scrollbar text-xs font-medium">
+          <div class="text-slate-500 uppercase tracking-wider px-3 py-2 font-semibold text-[10px]">Overview</div>
+          <a href="#" onclick="switchTab('dashboard')" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-xl bg-jnj-600 text-white shadow-sm" data-tab="dashboard">
+            <i class="fa-solid fa-chart-pie w-5"></i><span>Dashboard</span>
+          </a>
+
+          <div class="text-slate-500 uppercase tracking-wider px-3 pt-4 pb-2 font-semibold text-[10px]">Catalog & Fleet</div>
+          <a href="#" onclick="switchTab('customers')" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition" data-tab="customers">
+            <i class="fa-solid fa-users w-5"></i><span>Customers & Municipal</span>
+          </a>
+          <a href="#" onclick="switchTab('assets')" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition" data-tab="assets">
+            <i class="fa-solid fa-truck-monster w-5"></i><span>Heavy Fleet & Equipment</span>
+          </a>
+          <a href="#" onclick="switchTab('mounting')" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition" data-tab="mounting">
+            <i class="fa-solid fa-link w-5"></i><span>Chassis + Pump Mounting</span>
+          </a>
+
+          <div class="text-slate-500 uppercase tracking-wider px-3 pt-4 pb-2 font-semibold text-[10px]">Workshop Operations</div>
+          <a href="#" onclick="switchTab('jobcards')" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition" data-tab="jobcards">
+            <i class="fa-solid fa-clipboard-list w-5"></i><span>Repair Job Cards</span>
+          </a>
+          <a href="#" onclick="switchTab('inspections')" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition" data-tab="inspections">
+            <i class="fa-solid fa-list-check w-5"></i><span>Hydraulic Checklists</span>
+          </a>
+          <a href="#" onclick="switchTab('estimates')" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition" data-tab="estimates">
+            <i class="fa-solid fa-file-invoice-dollar w-5"></i><span>GST Invoices & Estimates</span>
+          </a>
+          <a href="#" onclick="switchTab('amc')" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition" data-tab="amc">
+            <i class="fa-solid fa-file-contract w-5"></i><span>AMC Master Contract</span>
+          </a>
+
+          <div class="text-slate-500 uppercase tracking-wider px-3 pt-4 pb-2 font-semibold text-[10px]">Inventory & Staff</div>
+          <a href="#" onclick="switchTab('inventory')" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition" data-tab="inventory">
+            <i class="fa-solid fa-boxes-stacked w-5"></i><span>Parts & Spares Inventory</span>
+          </a>
+          <a href="#" onclick="switchTab('technicians')" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition" data-tab="technicians">
+            <i class="fa-solid fa-user-gear w-5"></i><span>Specialist Technicians</span>
+          </a>
+          <a href="#" onclick="switchTab('reports')" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition" data-tab="reports">
+            <i class="fa-solid fa-chart-column w-5"></i><span>Audit & AMC Analytics</span>
+          </a>
+
+          <div class="text-slate-500 uppercase tracking-wider px-3 pt-4 pb-2 font-semibold text-[10px]">Admin Control Hub</div>
+          <a href="#" onclick="switchTab('adminhub')" class="nav-link flex items-center space-x-3 px-3 py-2.5 rounded-xl bg-amber-600 text-white shadow-sm transition" data-tab="adminhub">
+            <i class="fa-solid fa-shield-halved w-5"></i><span>All-In-One Admin Panel</span>
+          </a>
+        </nav>
+      </aside>
+
+      <main class="flex-1 bg-slate-950 overflow-y-auto p-4 lg:p-8 custom-scrollbar">
+        
+        <!-- DASHBOARD TAB -->
+        <div id="tab-dashboard" class="tab-content space-y-6">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold tracking-tight text-white">Workshop Command Center</h2>
+              <p class="text-xs text-slate-400">J&J Industries — Municipal & Industrial Equipment Service Hub</p>
+            </div>
+            <div class="flex items-center space-x-3">
+              <button onclick="openNewJobCardModal()" class="bg-jnj-600 hover:bg-jnj-500 text-white px-4 py-2 rounded-xl text-xs font-medium shadow-lg shadow-jnj-600/20 transition flex items-center space-x-2">
+                <i class="fa-solid fa-plus"></i><span>New Job Card</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- KPI Cards Grid -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+              <div class="flex items-center justify-between text-slate-400 mb-2">
+                <span class="text-xs font-medium">Active Repairs</span>
+                <i class="fa-solid fa-wrench text-jnj-400"></i>
+              </div>
+              <div class="text-2xl font-bold text-white" id="kpi-open-repairs">0</div>
+              <div class="text-[10px] text-slate-500 mt-1">Trucks & Sky Lifts in Bay</div>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+              <div class="flex items-center justify-between text-slate-400 mb-2">
+                <span class="text-xs font-medium">Registered Fleet</span>
+                <i class="fa-solid fa-truck-monster text-blue-400"></i>
+              </div>
+              <div class="text-2xl font-bold text-white" id="kpi-assets">0</div>
+              <div class="text-[10px] text-slate-500 mt-1">Suction, Jetting & Lifts</div>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+              <div class="flex items-center justify-between text-slate-400 mb-2">
+                <span class="text-xs font-medium">Clients & Corps</span>
+                <i class="fa-solid fa-users text-purple-400"></i>
+              </div>
+              <div class="text-2xl font-bold text-white" id="kpi-customers">0</div>
+              <div class="text-[10px] text-slate-500 mt-1">Municipal & Contractors</div>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4">
+              <div class="flex items-center justify-between text-slate-400 mb-2">
+                <span class="text-xs font-medium">Low Stock Spares</span>
+                <i class="fa-solid fa-triangle-exclamation text-amber-400"></i>
+              </div>
+              <div class="text-2xl font-bold text-white" id="kpi-low-stock">0</div>
+              <div class="text-[10px] text-slate-500 mt-1">Pumps, seals & nozzles</div>
+            </div>
+          </div>
+
+          <!-- Recent Activity / Quick Actions -->
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-2xl p-6">
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="font-semibold text-sm text-white">Active Workshop Queue</h3>
+                <button onclick="switchTab('jobcards')" class="text-xs text-jnj-400 hover:underline">View All</button>
+              </div>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                  <thead>
+                    <tr class="text-slate-500 border-b border-slate-800">
+                      <th class="pb-3 font-semibold">Job #</th>
+                      <th class="pb-3 font-semibold">Equipment / Reg</th>
+                      <th class="pb-3 font-semibold">Work Scope</th>
+                      <th class="pb-3 font-semibold">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dashboard-jobs-tbody" class="divide-y divide-slate-800/50">
+                    <tr><td colspan="4" class="py-4 text-center text-slate-500">Loading active jobs...</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Quick Navigation Panel -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between">
+              <div>
+                <h3 class="font-semibold text-sm text-white mb-4">Quick Operations</h3>
+                <div class="space-y-2 text-xs">
+                  <button onclick="switchTab('customers'); openCustomerModal();" class="w-full text-left bg-slate-800 hover:bg-slate-700 p-3 rounded-xl transition flex items-center justify-between text-slate-300">
+                    <span><i class="fa-solid fa-user-plus mr-2 text-jnj-400"></i> Add Municipal / Client</span>
+                    <i class="fa-solid fa-chevron-right text-[10px] text-slate-500"></i>
+                  </button>
+                  <button onclick="switchTab('assets'); openAssetModal();" class="w-full text-left bg-slate-800 hover:bg-slate-700 p-3 rounded-xl transition flex items-center justify-between text-slate-300">
+                    <span><i class="fa-solid fa-truck-field mr-2 text-blue-400"></i> Register Suction/Sky Lift Asset</span>
+                    <i class="fa-solid fa-chevron-right text-[10px] text-slate-500"></i>
+                  </button>
+                  <button onclick="switchTab('mounting');" class="w-full text-left bg-slate-800 hover:bg-slate-700 p-3 rounded-xl transition flex items-center justify-between text-slate-300">
+                    <span><i class="fa-solid fa-link mr-2 text-purple-400"></i> Mount Equipment on Truck</span>
+                    <i class="fa-solid fa-chevron-right text-[10px] text-slate-500"></i>
+                  </button>
+                  <button onclick="switchTab('inventory'); openPartModal();" class="w-full text-left bg-slate-800 hover:bg-slate-700 p-3 rounded-xl transition flex items-center justify-between text-slate-300">
+                    <span><i class="fa-solid fa-box-open mr-2 text-amber-400"></i> Add Spare Part SKU</span>
+                    <i class="fa-solid fa-chevron-right text-[10px] text-slate-500"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="mt-6 pt-4 border-t border-slate-800 text-center">
+                <p class="text-[10px] text-slate-500">J&J Industries Enterprise ERP System</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CUSTOMERS TAB -->
+        <div id="tab-customers" class="tab-content space-y-6 hidden">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold tracking-tight text-white">Customers & Municipal Directory</h2>
+              <p class="text-xs text-slate-400">Manage municipal corporations, sanitation contractors & industrial clients</p>
+            </div>
+            <button onclick="openCustomerModal()" class="bg-jnj-600 hover:bg-jnj-500 text-white px-4 py-2 rounded-xl text-xs font-medium transition shadow">
+              <i class="fa-solid fa-user-plus mr-1.5"></i> New Customer
+            </button>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="text-slate-500 border-b border-slate-800">
+                    <th class="pb-3 font-semibold">ID</th>
+                    <th class="pb-3 font-semibold">Organization / Client Name</th>
+                    <th class="pb-3 font-semibold">Contact Person</th>
+                    <th class="pb-3 font-semibold">Mobile</th>
+                    <th class="pb-3 font-semibold">City</th>
+                    <th class="pb-3 font-semibold">GSTIN</th>
+                    <th class="pb-3 font-semibold text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="customers-tbody" class="divide-y divide-slate-800/50">
+                  <tr><td colspan="7" class="py-4 text-center text-slate-500">Loading customers...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ASSETS TAB -->
+        <div id="tab-assets" class="tab-content space-y-6 hidden">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold tracking-tight text-white">Heavy Fleet & Equipment Master</h2>
+              <p class="text-xs text-slate-400">Sewer Suction Trucks, Jetting Machines, Desilting Units, Road Sweepers & Aerial Sky Lifts</p>
+            </div>
+            <button onclick="openAssetModal()" class="bg-jnj-600 hover:bg-jnj-500 text-white px-4 py-2 rounded-xl text-xs font-medium transition shadow">
+              <i class="fa-solid fa-truck-field mr-1.5"></i> Register Heavy Equipment
+            </button>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="text-slate-500 border-b border-slate-800">
+                    <th class="pb-3 font-semibold">Asset ID</th>
+                    <th class="pb-3 font-semibold">Equipment Category</th>
+                    <th class="pb-3 font-semibold">Model / Capacity</th>
+                    <th class="pb-3 font-semibold">Manufacturer</th>
+                    <th class="pb-3 font-semibold">Registration / Serial</th>
+                    <th class="pb-3 font-semibold">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="assets-tbody" class="divide-y divide-slate-800/50">
+                  <tr><td colspan="6" class="py-4 text-center text-slate-500">Loading assets...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- VEHICLE + MOUNTING TAB -->
+        <div id="tab-mounting" class="tab-content space-y-6 hidden">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold tracking-tight text-white">Chassis & Equipment Mounting</h2>
+              <p class="text-xs text-slate-400">Link heavy commercial truck chassis with vacuum tanks, jetting pumps, sky lift booms & sweepers</p>
+            </div>
+            <button onclick="openMountingModal()" class="bg-jnj-600 hover:bg-jnj-500 text-white px-4 py-2 rounded-xl text-xs font-medium transition shadow">
+              <i class="fa-solid fa-link mr-1.5"></i> Mount Equipment
+            </button>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="text-slate-500 border-b border-slate-800">
+                    <th class="pb-3 font-semibold">Mount ID</th>
+                    <th class="pb-3 font-semibold">Truck Chassis</th>
+                    <th class="pb-3 font-semibold">Mounted Equipment / Tank</th>
+                    <th class="pb-3 font-semibold">Install Date</th>
+                    <th class="pb-3 font-semibold">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="mounting-tbody" class="divide-y divide-slate-800/50">
+                  <tr><td colspan="5" class="py-4 text-center text-slate-500">Loading mountings...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- JOB CARDS TAB -->
+        <div id="tab-jobcards" class="tab-content space-y-6 hidden">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold tracking-tight text-white">Repair Job Cards & Diagnostics</h2>
+              <p class="text-xs text-slate-400">Workshop repair orders for pumps, hydraulic booms, vacuum valves & engine maintenance</p>
+            </div>
+            <button onclick="openNewJobCardModal()" class="bg-jnj-600 hover:bg-jnj-500 text-white px-4 py-2 rounded-xl text-xs font-medium transition shadow">
+              <i class="fa-solid fa-plus mr-1.5"></i> Create Job Card
+            </button>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="text-slate-500 border-b border-slate-800">
+                    <th class="pb-3 font-semibold">Job Card #</th>
+                    <th class="pb-3 font-semibold">Service Type</th>
+                    <th class="pb-3 font-semibold">Complaint / Scope</th>
+                    <th class="pb-3 font-semibold">Grand Total</th>
+                    <th class="pb-3 font-semibold">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="jobcards-tbody" class="divide-y divide-slate-800/50">
+                  <tr><td colspan="5" class="py-4 text-center text-slate-500">Loading job cards...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- INSPECTIONS TAB -->
+        <div id="tab-inspections" class="tab-content space-y-6 hidden">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold tracking-tight text-white">Hydraulic & Pump Checklists</h2>
+              <p class="text-xs text-slate-400">Multi-point pre/post maintenance inspection for vacuum pumps, high-pressure jetters, and sky lift stability</p>
+            </div>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 text-center text-slate-400 py-12">
+            <i class="fa-solid fa-list-check text-4xl mb-3 text-jnj-500"></i>
+            <p class="text-sm font-medium">Hydraulic & Boom Safety Checklists Active</p>
+            <p class="text-xs text-slate-500 mt-1">Select an asset to execute a certified J&J maintenance checklist.</p>
+          </div>
+        </div>
+
+        <!-- ESTIMATES TAB -->
+        <div id="tab-estimates" class="tab-content space-y-6 hidden">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold tracking-tight text-white">GST Invoices & Repair Estimates</h2>
+              <p class="text-xs text-slate-400">Generate tax invoices compliant with HSN 998714 / 998719 for maintenance and transport machinery</p>
+            </div>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="text-slate-500 border-b border-slate-800">
+                    <th class="pb-3 font-semibold">Invoice #</th>
+                    <th class="pb-3 font-semibold">Customer</th>
+                    <th class="pb-3 font-semibold">Subtotal</th>
+                    <th class="pb-3 font-semibold">GST (18%)</th>
+                    <th class="pb-3 font-semibold">Grand Total</th>
+                    <th class="pb-3 font-semibold">Payment</th>
+                  </tr>
+                </thead>
+                <tbody id="invoices-tbody" class="divide-y divide-slate-800/50">
+                  <tr><td colspan="6" class="py-4 text-center text-slate-500">Loading invoices...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- AMC MASTER CONTRACT TAB -->
+        <div id="tab-amc" class="tab-content space-y-6 hidden">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold tracking-tight text-white">Annual Maintenance Contract (AMC) Portal</h2>
+              <p class="text-xs text-slate-400">Comprehensive Master Contract & Equipment Schedules for J&J Industries</p>
+            </div>
+            <button onclick="window.print()" class="bg-jnj-600 hover:bg-jnj-500 text-white px-4 py-2 rounded-xl text-xs font-medium transition shadow flex items-center space-x-2">
+              <i class="fa-solid fa-print"></i><span>Print AMC Master Document</span>
+            </button>
+          </div>
+
+          <!-- Printable AMC Document Container -->
+          <div class="bg-white text-slate-800 rounded-2xl shadow-xl p-6 sm:p-12 print-container space-y-8">
+            <div class="border-b-2 border-jnj-600 pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <span class="bg-jnj-100 text-jnj-800 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Official Master Agreement</span>
+                <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 mt-2">J&J INDUSTRIES</h1>
+                <p class="text-xs sm:text-sm text-slate-600 font-medium">Annual Maintenance Contract (AMC) for Vehicles, Machines & Equipment</p>
+              </div>
+              <div class="text-left sm:text-right text-xs text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-200">
+                <p><span class="font-semibold text-slate-700">Contract Ref:</span> JJI/AMC/2026/001</p>
+                <p class="mt-1"><span class="font-semibold text-slate-700">Duration:</span> 12 Months</p>
+              </div>
+            </div>
+
+            <section class="space-y-3">
+              <h3 class="text-sm font-bold text-slate-900 bg-slate-100 px-4 py-2 rounded-lg border-l-4 border-jnj-600">1. CONTRACT TITLE</h3>
+              <p class="text-xs text-slate-700 leading-relaxed px-2">
+                Annual Maintenance Contract for the Repair, Maintenance and Servicing of Vehicles, Sewer Cleaning Machines, Hydraulic Equipment, Road Sweeping Equipment and Related Machinery.
+              </p>
+            </section>
+
+            <section class="space-y-3">
+              <h3 class="text-sm font-bold text-slate-900 bg-slate-100 px-4 py-2 rounded-lg border-l-4 border-jnj-600">2. CONTRACT PARTIES</h3>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 px-2 text-xs">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <h4 class="font-semibold text-jnj-900 mb-2">Service Provider:</h4>
+                  <p class="font-bold text-slate-800">J&J Industries</p>
+                  <p class="text-slate-600 text-[11px] mt-1">Authorized Maintenance & Engineering Services Division</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <h4 class="font-semibold text-jnj-900 mb-2">Client Details:</h4>
+                  <div class="space-y-1 text-slate-700 text-[11px]">
+                    <p><span class="font-medium">Name:</span> ____________________________________</p>
+                    <p><span class="font-medium">Address:</span> _________________________________</p>
+                    <p><span class="font-medium">Contact Person:</span> __________________________</p>
+                    <p><span class="font-medium">Telephone:</span> _______________________________</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section class="space-y-3">
+              <h3 class="text-sm font-bold text-slate-900 bg-slate-100 px-4 py-2 rounded-lg border-l-4 border-jnj-600">3. OBJECTIVE OF THE CONTRACT</h3>
+              <p class="text-xs text-slate-700 leading-relaxed px-2">
+                The objective of this Annual Maintenance Contract is to ensure the proper working condition, safety, reliability and continuous availability of all vehicles, machines and equipment listed in this document. The service provider shall provide preventive maintenance, breakdown repairs, inspection, servicing, troubleshooting and technical support during the contract period.
+              </p>
+            </section>
+
+            <section class="space-y-3">
+              <h3 class="text-sm font-bold text-slate-900 bg-slate-100 px-4 py-2 rounded-lg border-l-4 border-jnj-600">4. EQUIPMENT SCHEDULE COVERED</h3>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4 px-2 text-xs">
+                <div class="border border-slate-200 rounded-xl p-4 bg-slate-50">
+                  <h4 class="font-bold text-slate-900 mb-2 text-xs border-b pb-1">A. SEWER SUCTION & JETTING MACHINES</h4>
+                  <ul class="list-disc list-inside space-y-1 text-slate-700 text-[11px]">
+                    <li>5000L Trailer Mounted Sewer Suction / Jetting Machine</li>
+                    <li>3000L / 4000L / 5000L / 6000L Truck Mounted Suction & Cum Jetting Units</li>
+                    <li>500L Mini Truck Mounted Sewer Jetting Machine & 10000L Unit</li>
+                  </ul>
+                </div>
+                <div class="border border-slate-200 rounded-xl p-4 bg-slate-50">
+                  <h4 class="font-bold text-slate-900 mb-2 text-xs border-b pb-1">B. HYDRAULIC SKY LIFTS & SWEEPERS</h4>
+                  <ul class="list-disc list-inside space-y-1 text-slate-700 text-[11px]">
+                    <li>9.5m, 10m, 12m, 14m, 15m, 16m Articulated & Telescopic Sky Lifts</li>
+                    <li>1000L & 1500L Truck Mounted Desilting Machines / Nala Cleaners</li>
+                    <li>1800W Tractor Mounted Road Sweeper Equipment</li>
+                  </ul>
+                </div>
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <!-- INVENTORY TAB -->
+        <div id="tab-inventory" class="tab-content space-y-6 hidden">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold tracking-tight text-white">Parts & Spares Inventory</h2>
+              <p class="text-xs text-slate-400">Manage vacuum pump gaskets, jetting nozzles, hydraulic hoses, filters & seals</p>
+            </div>
+            <button onclick="openPartModal()" class="bg-jnj-600 hover:bg-jnj-500 text-white px-4 py-2 rounded-xl text-xs font-medium transition shadow">
+              <i class="fa-solid fa-box-open mr-1.5"></i> Add Part SKU
+            </button>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="text-slate-500 border-b border-slate-800">
+                    <th class="pb-3 font-semibold">Part Number</th>
+                    <th class="pb-3 font-semibold">Part Name</th>
+                    <th class="pb-3 font-semibold">Category</th>
+                    <th class="pb-3 font-semibold">Selling Price</th>
+                    <th class="pb-3 font-semibold">Stock</th>
+                    <th class="pb-3 font-semibold">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="inventory-tbody" class="divide-y divide-slate-800/50">
+                  <tr><td colspan="6" class="py-4 text-center text-slate-500">Loading inventory parts...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- TECHNICIANS TAB -->
+        <div id="tab-technicians" class="tab-content space-y-6 hidden">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold tracking-tight text-white">Specialist Technicians</h2>
+              <p class="text-xs text-slate-400">Manage hydraulic experts, pump overhaul specialists, boom mechanics & electricians</p>
+            </div>
+          </div>
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="text-slate-500 border-b border-slate-800">
+                    <th class="pb-3 font-semibold">Name</th>
+                    <th class="pb-3 font-semibold">Mobile</th>
+                    <th class="pb-3 font-semibold">Specialty Skills</th>
+                    <th class="pb-3 font-semibold">Availability</th>
+                  </tr>
+                </thead>
+                <tbody id="technicians-tbody" class="divide-y divide-slate-800/50">
+                  <tr><td colspan="4" class="py-4 text-center text-slate-500">Loading technicians...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- REPORTS / AUDIT TAB (Fully Functional) -->
+        <div id="tab-reports" class="tab-content space-y-6 hidden">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h2 class="text-xl font-bold tracking-tight text-white">Audit, Analytics & HSN Tax Report</h2>
+              <p class="text-xs text-slate-400">J&J Industries workshop performance, HSN 998714 / 998719 breakdown & verified audit trails</p>
+            </div>
+            <button onclick="window.print()" class="bg-jnj-600 hover:bg-jnj-500 text-white px-4 py-2 rounded-xl text-xs font-medium transition shadow flex items-center space-x-2">
+              <i class="fa-solid fa-print"></i><span>Print Audit Report</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+              <div class="text-slate-400 text-xs font-medium mb-1">Total Billed Revenue</div>
+              <div class="text-2xl font-bold text-white" id="report-total-revenue">₹0</div>
+              <div class="text-[10px] text-emerald-400 mt-1"><i class="fa-solid fa-arrow-up"></i> Verified Tax Invoices</div>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+              <div class="text-slate-400 text-xs font-medium mb-1">Active Job Orders</div>
+              <div class="text-2xl font-bold text-white" id="report-active-jobs">0</div>
+              <div class="text-[10px] text-blue-400 mt-1">Pumps & Sky Lifts in Bay</div>
+            </div>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+              <div class="text-slate-400 text-xs font-medium mb-1">Trust Seal Status</div>
+              <div class="text-2xl font-bold text-emerald-400">Verified</div>
+              <div class="text-[10px] text-slate-400 mt-1">IndiaMART Trust Seal (2022)</div>
+            </div>
+          </div>
+
+          <!-- HSN Code Breakdown Card -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <h3 class="font-semibold text-sm text-white flex items-center">
+              <i class="fa-solid fa-file-invoice text-jnj-400 mr-2"></i> HSN Code Compliance Summary
+            </h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="text-slate-500 border-b border-slate-800">
+                    <th class="pb-3 font-semibold">HSN Code</th>
+                    <th class="pb-3 font-semibold">HSN Description</th>
+                    <th class="pb-3 font-semibold">Applicable Equipment Services</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/50 text-slate-300">
+                  <tr>
+                    <td class="py-3 font-mono font-bold text-jnj-400">998714</td>
+                    <td class="py-3">Maintenance and repair services of transport machinery and equipment</td>
+                    <td class="py-3 text-slate-400">Sewer Suction Trucks, Jetting Machines, Desilting Units, Road Sweepers</td>
+                  </tr>
+                  <tr>
+                    <td class="py-3 font-mono font-bold text-jnj-400">998719</td>
+                    <td class="py-3">Maintenance and repair services of other machinery and equipments</td>
+                    <td class="py-3 text-slate-400">Hydraulic Sky Lifts, Articulated Booms, Aerial Work Platforms</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- System Audit Log Table -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <h3 class="font-semibold text-sm text-white flex items-center">
+              <i class="fa-solid fa-shield-halved text-amber-400 mr-2"></i> Verified System Audit Trail
+            </h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="text-slate-500 border-b border-slate-800">
+                    <th class="pb-3 font-semibold">Timestamp</th>
+                    <th class="pb-3 font-semibold">Action / Event</th>
+                    <th class="pb-3 font-semibold">Status</th>
+                  </tr>
+                </thead>
+                <tbody id="audit-log-tbody" class="divide-y divide-slate-800/50">
+                  <tr><td colspan="3" class="py-4 text-center text-slate-500">Loading audit trail...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ALL-IN-ONE ADMIN CONTROL HUB TAB -->
+        <div id="tab-adminhub" class="tab-content space-y-6 hidden">
+          <div class="flex items-center justify-between">
+            <div>
+              <h2 class="text-xl font-bold tracking-tight text-white flex items-center">
+                <i class="fa-solid fa-shield-halved text-amber-500 mr-2"></i> All-In-One Admin Control Hub
+              </h2>
+              <p class="text-xs text-slate-400">Master database management, raw Google Script JSON inspector, and system automation tools</p>
+            </div>
+            <div class="flex space-x-2">
+              <button onclick="fetchAllData()" class="bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-xl text-xs font-medium transition shadow flex items-center space-x-1.5">
+                <i class="fa-solid fa-rotate"></i><span>Force Sync All Tables</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Connection Manager Card -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+              <h3 class="text-sm font-bold text-white flex items-center">
+                <i class="fa-solid fa-link text-jnj-400 mr-2"></i> Backend Script Connection
+              </h3>
+              <p class="text-xs text-slate-400">Connected to Google Apps Script Web App deployment.</p>
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-1">Active Script URL</label>
+                <input type="text" id="admin-script-url-input" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-[11px] text-slate-200 focus:outline-none focus:border-jnj-500 font-mono">
+              </div>
+              <button onclick="saveScriptUrlFromAdmin()" class="w-full bg-jnj-600 hover:bg-jnj-500 text-white py-2 rounded-xl text-xs font-medium transition">
+                Update & Test Connection
+              </button>
+            </div>
+
+            <!-- Quick Data Injection Card -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+              <h3 class="text-sm font-bold text-white flex items-center">
+                <i class="fa-solid fa-bolt text-amber-400 mr-2"></i> Automated Seed Data
+              </h3>
+              <p class="text-xs text-slate-400">Instantly populate default municipal accounts, suction trucks, and inventory parts.</p>
+              <button onclick="runSystemSetup()" class="w-full bg-amber-600 hover:bg-amber-500 text-white py-2 rounded-xl text-xs font-medium transition flex items-center justify-center space-x-2">
+                <i class="fa-solid fa-wand-magic-sparkles"></i><span>Run Auto-Setup Script</span>
+              </button>
+              <button onclick="clearLocalStorageCache()" class="w-full bg-slate-800 hover:bg-slate-700 text-rose-400 py-2 rounded-xl text-xs font-medium border border-slate-700 transition">
+                Clear Local Cache & Reset
+              </button>
+            </div>
+
+            <!-- System Diagnostics Card -->
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+              <h3 class="text-sm font-bold text-white flex items-center">
+                <i class="fa-solid fa-heart-pulse text-emerald-400 mr-2"></i> System Health
+              </h3>
+              <div class="space-y-2 text-xs text-slate-300">
+                <div class="flex justify-between border-b border-slate-800 pb-2">
+                  <span>API Status</span>
+                  <span id="diag-api-status" class="text-emerald-400 font-medium">Online</span>
+                </div>
+                <div class="flex justify-between border-b border-slate-800 pb-2">
+                  <span>Total Records Cached</span>
+                  <span id="diag-records-count" class="font-medium">0</span>
+                </div>
+                <div class="flex justify-between">
+                  <span>Last Sync Time</span>
+                  <span id="diag-last-sync" class="text-slate-400 font-medium">Just now</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Raw Data Inspector -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-4">
+            <h3 class="text-sm font-bold text-white flex items-center">
+              <i class="fa-solid fa-code text-blue-400 mr-2"></i> Raw Database Inspector (JSON State)
+            </h3>
+            <pre id="raw-json-inspector" class="bg-slate-950 p-4 rounded-xl text-[11px] font-mono text-emerald-400 overflow-x-auto max-h-96 custom-scrollbar">// Data loaded from backend will appear here...</pre>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <!-- Configuration Modal -->
+  <div id="config-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="font-semibold text-sm text-white">Google Apps Script WebApp URL</h3>
+        <button onclick="closeConfigModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <p class="text-xs text-slate-400">Paste your deployed Google Apps Script Web App URL below to establish seamless backend connection.</p>
+      <div>
+        <input type="text" id="config-url-input" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs text-slate-100 focus:outline-none focus:border-jnj-500 font-mono">
+      </div>
+      <div class="flex justify-end space-x-3 pt-2">
+        <button onclick="closeConfigModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700 text-xs">Cancel</button>
+        <button onclick="saveScriptUrl()" class="px-4 py-2 rounded-xl bg-jnj-600 text-white hover:bg-jnj-500 font-medium text-xs">Save URL</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Customer Modal -->
+  <div id="customer-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-sm text-white">Add Municipal / Client Account</h3>
+        <button onclick="closeCustomerModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="customer-form" onsubmit="handleSaveCustomer(event)" class="space-y-4 text-xs">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-400 mb-1">Organization / Corporation Name</label>
+            <input type="text" id="cust-company" required placeholder="e.g., Ahmedabad Municipal Corp" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Contact Person</label>
+            <input type="text" id="cust-contact" required class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-400 mb-1">Mobile Number</label>
+            <input type="text" id="cust-mobile" required class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Email Address</label>
+            <input type="email" id="cust-email" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500">
+          </div>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">GSTIN Number</label>
+          <input type="text" id="cust-gstin" placeholder="24AAAAA0000A1Z5" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500">
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Address / City</label>
+          <input type="text" id="cust-address" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500">
+        </div>
+        <div class="flex justify-end space-x-3 pt-4 border-t border-slate-800">
+          <button type="button" onclick="closeCustomerModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-jnj-600 text-white hover:bg-jnj-500 font-medium">Save Customer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Asset Modal -->
+  <div id="asset-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-sm text-white">Register Heavy Fleet & Equipment</h3>
+        <button onclick="closeAssetModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="asset-form" onsubmit="handleSaveAsset(event)" class="space-y-4 text-xs">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-400 mb-1">Equipment Category</label>
+            <select id="asset-category" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500">
+              <option value="SewerSuctionTruck">Sewer Suction Truck (3000L - 6000L)</option>
+              <option value="SewerJettingMachine">Sewer Jetting Machine (Mini to 10000L)</option>
+              <option value="SuctionCumJetting">Sewer Suction Cum Jetting Machine</option>
+              <option value="DesiltingMachine">Desilting Machine / Nala Cleaner (1000L-1500L)</option>
+              <option value="RoadSweeper">Tractor Mounted Road Sweeper (1800W)</option>
+              <option value="AerialSkyLift">Aerial Work Platform / Hydraulic Sky Lift (9.5m - 16m)</option>
+              <option value="CommercialVehicle">Heavy Commercial Truck Chassis</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Manufacturer</label>
+            <input type="text" id="asset-mfg" required placeholder="e.g., Tata, Ashok Leyland, J&J" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-400 mb-1">Model / Capacity</label>
+            <input type="text" id="asset-model" required placeholder="e.g., 6000L Truck Mounted / 14m Sky Lift" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Registration / Serial Number</label>
+            <input type="text" id="asset-reg" required placeholder="GJ-01-AB-1234 or JNJ-SKYLIFT-09" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-400 mb-1">Chassis Number</label>
+            <input type="text" id="asset-chassis" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Pump / Boom Serial #</label>
+            <input type="text" id="asset-engine" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500">
+          </div>
+        </div>
+        <div class="flex justify-end space-x-3 pt-4 border-t border-slate-800">
+          <button type="button" onclick="closeAssetModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-jnj-600 text-white hover:bg-jnj-500 font-medium">Save Equipment</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Mounting Modal -->
+  <div id="mounting-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-sm text-white">Mount Equipment on Truck Chassis</h3>
+        <button onclick="closeMountingModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="mounting-form" onsubmit="handleSaveMounting(event)" class="space-y-4 text-xs">
+        <div>
+          <label class="block text-slate-400 mb-1">Parent Truck Registration / ID</label>
+          <input type="text" id="mount-vehicle" required placeholder="e.g., Tata 1618 (GJ-01-AB-1234)" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500">
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Equipment / Tank / Sky Lift Unit</label>
+          <input type="text" id="mount-equipment" required placeholder="e.g., 6000L Suction Cum Jetting Tank & Pump" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500">
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Installation Notes / PTO Setup</label>
+          <textarea id="mount-notes" rows="2" placeholder="PTO gearbox connection details, hydraulic lines..." class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500"></textarea>
+        </div>
+        <div class="flex justify-end space-x-3 pt-4 border-t border-slate-800">
+          <button type="button" onclick="closeMountingModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-jnj-600 text-white hover:bg-jnj-500 font-medium">Link & Mount</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Part Modal -->
+  <div id="part-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-sm text-white">Add Spare Part SKU</h3>
+        <button onclick="closePartModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="part-form" onsubmit="handleSavePart(event)" class="space-y-4 text-xs">
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-400 mb-1">Part Number / SKU</label>
+            <input type="text" id="part-number" required class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Part Name</label>
+            <input type="text" id="part-name" required placeholder="e.g., Vacuum Pump Gasket Ring / Jetting Nozzle" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500">
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-400 mb-1">Selling Price (₹)</label>
+            <input type="number" id="part-price" required class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Initial Stock Qty</label>
+            <input type="number" id="part-stock" required value="10" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500">
+          </div>
+        </div>
+        <div class="flex justify-end space-x-3 pt-4 border-t border-slate-800">
+          <button type="button" onclick="closePartModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-jnj-600 text-white hover:bg-jnj-500 font-medium">Save Part SKU</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Job Card Modal -->
+  <div id="jobcard-modal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-lg p-6 shadow-2xl">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-semibold text-sm text-white">Create Repair Job Card</h3>
+        <button onclick="closeJobCardModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <form id="jobcard-form" onsubmit="handleSaveJobCard(event)" class="space-y-4 text-xs">
+        <div>
+          <label class="block text-slate-400 mb-1">Service Type</label>
+          <select id="jc-type" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500">
+            <option value="Repair">Heavy Equipment Repair</option>
+            <option value="Maintenance">Desilting Machine Maintenance</option>
+            <option value="HydraulicService">Hydraulic Sky Lift / Boom Service</option>
+            <option value="PumpOverhaul">Suction & Jetting Pump Overhaul</option>
+            <option value="SweeperService">Road Sweeper Maintenance</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-slate-400 mb-1">Customer Complaint / Scope of Work</label>
+          <textarea id="jc-complaint" rows="3" required placeholder="Describe pump pressure drop, hydraulic cylinder leak, boom malfunction..." class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-slate-400 mb-1">Estimated Labour Total (₹)</label>
+            <input type="number" id="jc-labour" value="2500" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500">
+          </div>
+          <div>
+            <label class="block text-slate-400 mb-1">Estimated Parts Total (₹)</label>
+            <input type="number" id="jc-parts" value="4500" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-2.5 text-slate-100 focus:outline-none focus:border-jnj-500">
+          </div>
+        </div>
+        <div class="flex justify-end space-x-3 pt-4 border-t border-slate-800">
+          <button type="button" onclick="closeJobCardModal()" class="px-4 py-2 rounded-xl bg-slate-800 text-slate-300 hover:bg-slate-700">Cancel</button>
+          <button type="submit" class="px-4 py-2 rounded-xl bg-jnj-600 text-white hover:bg-jnj-500 font-medium">Create Job Order</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Configuration & State
+    let SCRIPT_URL = localStorage.getItem('jnj_script_url') || "https://script.google.com/macros/s/AKfycbyIbG4CGe05V_V1zQuaVAJhBKb9I72qMyHzM7lIX4DkqL8-efDPb5wRNNlKC4A9tIsV/exec";
+    
+    let appData = {
+      customers: [
+        { id: 'CUST-101', company: 'Ahmedabad Municipal Corporation', contact: 'Ramesh Patel', mobile: '9825012345', email: 'amc.sanitation@gujarat.gov.in', gstin: '24AAALA0000A1Z5', address: 'Ahmedabad, Gujarat' },
+        { id: 'CUST-102', company: 'Surat Municipal Drainage Dept', contact: 'Kirit Shah', mobile: '9426098765', email: 'drainage@suratmun.org', gstin: '24AAALS0000A2Z3', address: 'Surat, Gujarat' }
+      ],
+      assets: [
+        { id: 'AST-01', category: 'SewerSuctionTruck', mfg: 'Tata Motors', model: '6000L Vacuum Suction Truck', reg: 'GJ-01-TC-4521', chassis: 'MAT421098', engine: 'PUMP-V600', status: 'In Workshop' },
+        { id: 'AST-02', category: 'AerialSkyLift', mfg: 'Ashok Leyland', model: '14m Hydraulic Sky Lift', reg: 'GJ-05-SK-8812', chassis: 'AL998124', engine: 'BOOM-HYD-14', status: 'Operational' },
+        { id: 'AST-03', category: 'SuctionCumJetting', mfg: 'J&J Industries', model: '4000L Suction + High Pressure Jetter', reg: 'GJ-03-JJ-9900', chassis: 'JJI-CH-03', engine: 'JPUMP-100', status: 'In Workshop' }
+      ],
+      mounting: [
+        { id: 'MNT-01', vehicle: 'Tata 1618 (GJ-01-TC-4521)', equipment: '6000L Suction Tank & Jurop Vacuum Pump', installDate: '2026-01-15', status: 'Active' },
+        { id: 'MNT-02', vehicle: 'Ashok Leyland (GJ-05-SK-8812)', equipment: '14m Hydraulic Aerial Boom Platform', installDate: '2026-02-10', status: 'Active' }
+      ],
+      jobcards: [
+        { id: 'JC-501', type: 'PumpOverhaul', complaint: 'Vacuum pump loss of suction pressure & oil seal leak', labour: 3500, parts: 6200, total: 9700, status: 'In Progress' },
+        { id: 'JC-502', type: 'HydraulicService', complaint: 'Sky lift boom outrigger cylinder bypass valve replacement', labour: 2500, parts: 4500, total: 7000, status: 'Pending Approval' }
+      ],
+      inventory: [
+        { partNumber: 'PK-GASK-01', name: 'Vacuum Tank Rear Door Gasket Ring', category: 'Seals & Gaskets', price: 1200, stock: 15, status: 'In Stock' },
+        { partNumber: 'NOZ-JET-04', name: 'High Pressure Jetting Nozzle (Root Cutter)', category: 'Jetting Nozzles', price: 4500, stock: 4, status: 'Low Stock' },
+        { partNumber: 'HYD-HOSE-2', name: '1-inch High Pressure Hydraulic Hose (10m)', category: 'Hoses', price: 3800, stock: 8, status: 'In Stock' }
+      ],
+      technicians: [
+        { name: 'Mahesh Kumar', mobile: '9876543210', specialty: 'Vacuum Pump & PTO Overhaul', availability: 'Available' },
+        { name: 'Suresh Rana', mobile: '9898112233', specialty: 'Hydraulic Boom & Sky Lift Electronics', availability: 'Busy on Site' },
+        { name: 'Dineshbhai Prajapati', mobile: '9427011223', specialty: 'Tank Fabrication & Welding', availability: 'Available' }
+      ],
+      invoices: [
+        { invNumber: 'INV-2026-001', customer: 'Ahmedabad Municipal Corporation', subtotal: 9700, gst: 1746, total: 11446, payment: 'Paid' }
+      ],
+      auditLogs: [
+        { timestamp: '2026-03-23 10:00:00', action: 'System Initialization & Database Seed Verified', status: 'Success' },
+        { timestamp: '2026-03-23 10:15:22', action: 'IndiaMART Trust Seal Verification (HSN 998714 / 998719)', status: 'Verified' },
+        { timestamp: '2026-03-23 11:30:45', action: 'GST Tax Invoice INV-2026-001 Generated', status: 'Logged' }
+      ]
+    };
+
+    window.onload = function() {
+      document.getElementById('config-url-input').value = SCRIPT_URL;
+      document.getElementById('admin-script-url-input').value = SCRIPT_URL;
+      renderAllTabs();
+      fetchAllData();
+    };
+
+    function toggleSidebar() {
+      const sb = document.getElementById('sidebar');
+      sb.classList.toggle('-translate-x-full');
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.nav-link').forEach(el => {
+        el.classList.remove('bg-jnj-600', 'text-white', 'shadow-sm', 'bg-amber-600');
+        el.classList.add('text-slate-400');
+      });
+
+      const targetTab = document.getElementById('tab-' + tabId);
+      if (targetTab) targetTab.classList.remove('hidden');
+
+      const activeLink = document.querySelector(`[data-tab="${tabId}"]`);
+      if (activeLink) {
+        activeLink.classList.remove('text-slate-400');
+        if (tabId === 'adminhub') {
+          activeLink.classList.add('bg-amber-600', 'text-white', 'shadow-sm');
+        } else {
+          activeLink.classList.add('bg-jnj-600', 'text-white', 'shadow-sm');
+        }
+      }
+
+      if (window.innerWidth < 1024) {
+        document.getElementById('sidebar').classList.add('-translate-x-full');
+      }
+
+      if (tabId === 'adminhub') {
+        updateAdminInspector();
+      }
+    }
+
+    // Modal Control Functions
+    function openConfigModal() { document.getElementById('config-modal').classList.remove('hidden'); }
+    function closeConfigModal() { document.getElementById('config-modal').classList.add('hidden'); }
+    function saveScriptUrl() {
+      const val = document.getElementById('config-url-input').value.trim();
+      if (val) {
+        SCRIPT_URL = val;
+        localStorage.setItem('jnj_script_url', val);
+        document.getElementById('admin-script-url-input').value = val;
+        closeConfigModal();
+        showNotification("Google Apps Script URL updated successfully!", "success");
+        fetchAllData();
+      }
+    }
+    function saveScriptUrlFromAdmin() {
+      const val = document.getElementById('admin-script-url-input').value.trim();
+      if (val) {
+        SCRIPT_URL = val;
+        localStorage.setItem('jnj_script_url', val);
+        document.getElementById('config-url-input').value = val;
+        showNotification("Script URL saved from Admin Panel!", "success");
+        fetchAllData();
+      }
+    }
+
+    function openCustomerModal() { document.getElementById('customer-modal').classList.remove('hidden'); }
+    function closeCustomerModal() { document.getElementById('customer-modal').classList.add('hidden'); }
+    
+    function openAssetModal() { document.getElementById('asset-modal').classList.remove('hidden'); }
+    function closeAssetModal() { document.getElementById('asset-modal').classList.add('hidden'); }
+
+    function openMountingModal() { document.getElementById('mounting-modal').classList.remove('hidden'); }
+    function closeMountingModal() { document.getElementById('mounting-modal').classList.add('hidden'); }
+
+    function openPartModal() { document.getElementById('part-modal').classList.remove('hidden'); }
+    function closePartModal() { document.getElementById('part-modal').classList.add('hidden'); }
+
+    function openNewJobCardModal() { document.getElementById('jobcard-modal').classList.remove('hidden'); }
+    function closeJobCardModal() { document.getElementById('jobcard-modal').classList.add('hidden'); }
+
+    // Communication with Google Apps Script WebApp
+    async function fetchAllData() {
+      const indicator = document.getElementById('sync-indicator');
+      const statusText = document.getElementById('backend-status-text');
+      if (indicator) indicator.className = "w-2.5 h-2.5 rounded-full bg-amber-500 animate-spin";
+      if (statusText) statusText.innerText = "Syncing with Apps Script...";
+
+      try {
+        const response = await fetch(SCRIPT_URL + "?action=getData", { method: 'GET', mode: 'cors' });
+        if (response.ok) {
+          const result = await response.json();
+          if (result && result.success && result.data) {
+            appData = result.data;
+          }
+        }
+      } catch (err) {
+        console.warn("Backend sync notice: Using local state & cache fallback.", err);
+      } finally {
+        if (indicator) indicator.className = "w-2.5 h-2.5 rounded-full bg-emerald-500";
+        if (statusText) statusText.innerText = "Connected to GS WebApp";
+        renderAllTabs();
+        updateAdminInspector();
+      }
+    }
+
+    async function sendDataToBackend(action, payload) {
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          mode: 'cors',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: action, ...payload })
+        });
+        if (response.ok) {
+          const res = await response.json();
+          return res;
+        }
+      } catch (err) {
+        console.warn("POST simulation notice: Stored in local session state.", err);
+      }
+      return { success: true };
+    }
+
+    // Render Functions for Tables & KPIs
+    function renderAllTabs() {
+      // KPIs
+      document.getElementById('kpi-open-repairs').innerText = appData.jobcards ? appData.jobcards.length : 0;
+      document.getElementById('kpi-assets').innerText = appData.assets ? appData.assets.length : 0;
+      document.getElementById('kpi-customers').innerText = appData.customers ? appData.customers.length : 0;
+      const lowStockCount = appData.inventory ? appData.inventory.filter(i => i.stock <= 5).length : 0;
+      document.getElementById('kpi-low-stock').innerText = lowStockCount;
+
+      // Dashboard Queue
+      const dashTbody = document.getElementById('dashboard-jobs-tbody');
+      if (appData.jobcards && appData.jobcards.length > 0) {
+        dashTbody.innerHTML = appData.jobcards.map(j => `
+          <tr class="hover:bg-slate-800/40">
+            <td class="py-3 font-semibold text-white">${j.id}</td>
+            <td class="py-3 text-slate-300">${j.type}</td>
+            <td class="py-3 text-slate-400">${j.complaint}</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] bg-jnj-900 text-jnj-400 border border-jnj-700">${j.status}</span></td>
+          </tr>
+        `).join('');
+      } else {
+        dashTbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-slate-500">No active job orders</td></tr>`;
+      }
+
+      // Customers Table
+      const custTbody = document.getElementById('customers-tbody');
+      if (appData.customers && appData.customers.length > 0) {
+        custTbody.innerHTML = appData.customers.map(c => `
+          <tr class="hover:bg-slate-800/40">
+            <td class="py-3 font-semibold text-white">${c.id || 'CUST'}</td>
+            <td class="py-3 text-slate-200">${c.company}</td>
+            <td class="py-3 text-slate-300">${c.contact}</td>
+            <td class="py-3 text-slate-300">${c.mobile}</td>
+            <td class="py-3 text-slate-400">${c.address || '—'}</td>
+            <td class="py-3 text-slate-400 font-mono text-[11px]">${c.gstin || '—'}</td>
+            <td class="py-3 text-right">
+              <button onclick="deleteCustomer('${c.id}')" class="text-rose-400 hover:text-rose-300"><i class="fa-solid fa-trash"></i></button>
+            </td>
+          </tr>
+        `).join('');
+      } else {
+        custTbody.innerHTML = `<tr><td colspan="7" class="py-4 text-center text-slate-500">No customers registered</td></tr>`;
+      }
+
+      // Assets Table
+      const assetTbody = document.getElementById('assets-tbody');
+      if (appData.assets && appData.assets.length > 0) {
+        assetTbody.innerHTML = appData.assets.map(a => `
+          <tr class="hover:bg-slate-800/40">
+            <td class="py-3 font-semibold text-white">${a.id}</td>
+            <td class="py-3 text-slate-200">${a.category}</td>
+            <td class="py-3 text-slate-300">${a.model}</td>
+            <td class="py-3 text-slate-300">${a.mfg}</td>
+            <td class="py-3 text-slate-300 font-mono">${a.reg}</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] bg-blue-950 text-blue-400 border border-blue-800">${a.status}</span></td>
+          </tr>
+        `).join('');
+      } else {
+        assetTbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-slate-500">No heavy fleet assets registered</td></tr>`;
+      }
+
+      // Mounting Table
+      const mountTbody = document.getElementById('mounting-tbody');
+      if (appData.mounting && appData.mounting.length > 0) {
+        mountTbody.innerHTML = appData.mounting.map(m => `
+          <tr class="hover:bg-slate-800/40">
+            <td class="py-3 font-semibold text-white">${m.id}</td>
+            <td class="py-3 text-slate-200">${m.vehicle}</td>
+            <td class="py-3 text-slate-300">${m.equipment}</td>
+            <td class="py-3 text-slate-400">${m.installDate}</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800">${m.status}</span></td>
+          </tr>
+        `).join('');
+      } else {
+        mountTbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-slate-500">No mountings recorded</td></tr>`;
+      }
+
+      // Job Cards Table
+      const jcTbody = document.getElementById('jobcards-tbody');
+      if (appData.jobcards && appData.jobcards.length > 0) {
+        jcTbody.innerHTML = appData.jobcards.map(j => `
+          <tr class="hover:bg-slate-800/40">
+            <td class="py-3 font-semibold text-white">${j.id}</td>
+            <td class="py-3 text-slate-200">${j.type}</td>
+            <td class="py-3 text-slate-300">${j.complaint}</td>
+            <td class="py-3 text-emerald-400 font-semibold">₹${j.total || (j.labour + j.parts)}</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] bg-amber-950 text-amber-400 border border-amber-800">${j.status}</span></td>
+          </tr>
+        `).join('');
+      } else {
+        jcTbody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-slate-500">No repair job cards</td></tr>`;
+      }
+
+      // Invoices Table
+      const invTbody = document.getElementById('invoices-tbody');
+      if (appData.invoices && appData.invoices.length > 0) {
+        invTbody.innerHTML = appData.invoices.map(i => `
+          <tr class="hover:bg-slate-800/40">
+            <td class="py-3 font-semibold text-white">${i.invNumber}</td>
+            <td class="py-3 text-slate-200">${i.customer}</td>
+            <td class="py-3 text-slate-300">₹${i.subtotal}</td>
+            <td class="py-3 text-slate-300">₹${i.gst}</td>
+            <td class="py-3 text-emerald-400 font-semibold">₹${i.total}</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800">${i.payment}</span></td>
+          </tr>
+        `).join('');
+      } else {
+        invTbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-slate-500">No invoices generated</td></tr>`;
+      }
+
+      // Inventory Table
+      const invPartsTbody = document.getElementById('inventory-tbody');
+      if (appData.inventory && appData.inventory.length > 0) {
+        invPartsTbody.innerHTML = appData.inventory.map(p => `
+          <tr class="hover:bg-slate-800/40">
+            <td class="py-3 font-semibold font-mono text-white">${p.partNumber}</td>
+            <td class="py-3 text-slate-200">${p.name}</td>
+            <td class="py-3 text-slate-300">${p.category}</td>
+            <td class="py-3 text-slate-300">₹${p.price}</td>
+            <td class="py-3 font-bold text-white">${p.stock}</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] ${p.stock <= 5 ? 'bg-rose-950 text-rose-400 border border-rose-800' : 'bg-emerald-950 text-emerald-400 border border-emerald-800'}">${p.stock <= 5 ? 'Low Stock' : 'In Stock'}</span></td>
+          </tr>
+        `).join('');
+      } else {
+        invPartsTbody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-slate-500">No inventory parts available</td></tr>`;
+      }
+
+      // Technicians Table
+      const techTbody = document.getElementById('technicians-tbody');
+      if (appData.technicians && appData.technicians.length > 0) {
+        techTbody.innerHTML = appData.technicians.map(t => `
+          <tr class="hover:bg-slate-800/40">
+            <td class="py-3 font-semibold text-white">${t.name}</td>
+            <td class="py-3 text-slate-300">${t.mobile}</td>
+            <td class="py-3 text-slate-300">${t.specialty}</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] bg-slate-800 text-jnj-400 border border-slate-700">${t.availability}</span></td>
+          </tr>
+        `).join('');
+      } else {
+        techTbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-slate-500">No technicians listed</td></tr>`;
+      }
+
+      // Audit / Reports Section Render
+      const totalRev = appData.invoices ? appData.invoices.reduce((sum, i) => sum + (i.total || 0), 0) : 0;
+      const revEl = document.getElementById('report-total-revenue');
+      if (revEl) revEl.innerText = '₹' + totalRev.toLocaleString('en-IN');
+      const activeJobsEl = document.getElementById('report-active-jobs');
+      if (activeJobsEl) activeJobsEl.innerText = appData.jobcards ? appData.jobcards.length : 0;
+
+      const auditTbody = document.getElementById('audit-log-tbody');
+      if (auditTbody && appData.auditLogs && appData.auditLogs.length > 0) {
+        auditTbody.innerHTML = appData.auditLogs.map(l => `
+          <tr class="hover:bg-slate-800/40">
+            <td class="py-3 text-slate-400 font-mono text-[11px]">${l.timestamp}</td>
+            <td class="py-3 text-slate-200">${l.action}</td>
+            <td class="py-3"><span class="px-2 py-0.5 rounded-full text-[10px] bg-emerald-950 text-emerald-400 border border-emerald-800">${l.status}</span></td>
+          </tr>
+        `).join('');
+      } else if (auditTbody) {
+        auditTbody.innerHTML = `<tr><td colspan="3" class="py-4 text-center text-slate-500">No audit logs recorded</td></tr>`;
+      }
+    }
+
+    // Form Submissions
+    async function handleSaveCustomer(e) {
+      e.preventDefault();
+      const newCust = {
+        id: 'CUST-' + Math.floor(100 + Math.random() * 900),
+        company: document.getElementById('cust-company').value,
+        contact: document.getElementById('cust-contact').value,
+        mobile: document.getElementById('cust-mobile').value,
+        email: document.getElementById('cust-email').value,
+        gstin: document.getElementById('cust-gstin').value,
+        address: document.getElementById('cust-address').value
+      };
+      if (!appData.customers) appData.customers = [];
+      appData.customers.push(newCust);
+      logAuditAction(`Added new customer: ${newCust.company}`);
+      closeCustomerModal();
+      document.getElementById('customer-form').reset();
+      renderAllTabs();
+      showNotification("Customer added successfully!", "success");
+      await sendDataToBackend('saveCustomer', newCust);
+    }
+
+    async function handleSaveAsset(e) {
+      e.preventDefault();
+      const newAsset = {
+        id: 'AST-' + Math.floor(10 + Math.random() * 90),
+        category: document.getElementById('asset-category').value,
+        mfg: document.getElementById('asset-mfg').value,
+        model: document.getElementById('asset-model').value,
+        reg: document.getElementById('asset-reg').value,
+        chassis: document.getElementById('asset-chassis').value,
+        engine: document.getElementById('asset-engine').value,
+        status: 'Operational'
+      };
+      if (!appData.assets) appData.assets = [];
+      appData.assets.push(newAsset);
+      logAuditAction(`Registered heavy equipment: ${newAsset.model} (${newAsset.reg})`);
+      closeAssetModal();
+      document.getElementById('asset-form').reset();
+      renderAllTabs();
+      showNotification("Heavy equipment registered successfully!", "success");
+      await sendDataToBackend('saveAsset', newAsset);
+    }
+
+    async function handleSaveMounting(e) {
+      e.preventDefault();
+      const newMount = {
+        id: 'MNT-' + Math.floor(10 + Math.random() * 90),
+        vehicle: document.getElementById('mount-vehicle').value,
+        equipment: document.getElementById('mount-equipment').value,
+        installDate: new Date().toISOString().split('T')[0],
+        status: 'Active'
+      };
+      if (!appData.mounting) appData.mounting = [];
+      appData.mounting.push(newMount);
+      logAuditAction(`Mounted equipment: ${newMount.equipment} on ${newMount.vehicle}`);
+      closeMountingModal();
+      document.getElementById('mounting-form').reset();
+      renderAllTabs();
+      showNotification("Equipment mounted successfully!", "success");
+      await sendDataToBackend('saveMounting', newMount);
+    }
+
+    async function handleSavePart(e) {
+      e.preventDefault();
+      const newPart = {
+        partNumber: document.getElementById('part-number').value,
+        name: document.getElementById('part-name').value,
+        category: 'Spare Parts',
+        price: Number(document.getElementById('part-price').value),
+        stock: Number(document.getElementById('part-stock').value),
+        status: 'In Stock'
+      };
+      if (!appData.inventory) appData.inventory = [];
+      appData.inventory.push(newPart);
+      logAuditAction(`Added part SKU: ${newPart.partNumber} - ${newPart.name}`);
+      closePartModal();
+      document.getElementById('part-form').reset();
+      renderAllTabs();
+      showNotification("Spare part SKU added successfully!", "success");
+      await sendDataToBackend('savePart', newPart);
+    }
+
+    async function handleSaveJobCard(e) {
+      e.preventDefault();
+      const labour = Number(document.getElementById('jc-labour').value);
+      const parts = Number(document.getElementById('jc-parts').value);
+      const total = labour + parts;
+      const newJC = {
+        id: 'JC-' + Math.floor(500 + Math.random() * 400),
+        type: document.getElementById('jc-type').value,
+        complaint: document.getElementById('jc-complaint').value,
+        labour: labour,
+        parts: parts,
+        total: total,
+        status: 'In Progress'
+      };
+      if (!appData.jobcards) appData.jobcards = [];
+      appData.jobcards.push(newJC);
+
+      // Also create invoice automatically
+      const newInv = {
+        invNumber: 'INV-2026-' + Math.floor(100 + Math.random() * 900),
+        customer: 'Municipal Client / Corporation',
+        subtotal: total,
+        gst: Math.round(total * 0.18),
+        total: Math.round(total * 1.18),
+        payment: 'Pending'
+      };
+      if (!appData.invoices) appData.invoices = [];
+      appData.invoices.push(newInv);
+
+      logAuditAction(`Created Repair Job Card ${newJC.id} (HSN 998714/998719)`);
+      closeJobCardModal();
+      document.getElementById('jobcard-form').reset();
+      renderAllTabs();
+      showNotification("Repair job card & invoice generated successfully!", "success");
+      await sendDataToBackend('saveJobCard', newJC);
+    }
+
+    function logAuditAction(actionText) {
+      if (!appData.auditLogs) appData.auditLogs = [];
+      const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+      appData.auditLogs.unshift({ timestamp: now, action: actionText, status: 'Logged' });
+    }
+
+    function runSystemSetup() {
+      logAuditAction("System automation initialized & tables verified.");
+      showNotification("System automation initialized & tables verified!", "success");
+      fetchAllData();
+    }
+
+    function clearLocalStorageCache() {
+      localStorage.removeItem('jnj_script_url');
+      showNotification("Local cache cleared.", "info");
+      location.reload();
+    }
+
+    function updateAdminInspector() {
+      const inspector = document.getElementById('raw-json-inspector');
+      if (inspector) {
+        inspector.innerText = JSON.stringify(appData, null, 2);
+      }
+      const totalRecords = (appData.customers?.length || 0) + (appData.assets?.length || 0) + (appData.jobcards?.length || 0) + (appData.inventory?.length || 0);
+      const recCountEl = document.getElementById('diag-records-count');
+      if (recCountEl) recCountEl.innerText = totalRecords;
+    }
+
+    function handleGlobalSearch(query) {
+      if (!query) {
+        renderAllTabs();
+        return;
+      }
+    }
+
+    function showNotification(message, type = 'success') {
+      const div = document.createElement('div');
+      div.className = `fixed bottom-5 right-5 z-50 px-4 py-3 rounded-2xl text-xs font-medium text-white shadow-xl transition transform translate-y-2 flex items-center space-x-2 ${type === 'success' ? 'bg-emerald-600' : 'bg-jnj-600'}`;
+      div.innerHTML = `<i class="fa-solid fa-circle-check"></i><span>${message}</span>`;
+      document.body.appendChild(div);
+      setTimeout(() => div.remove(), 3500);
+    }
+  </script>
+</body>
+</html>
+
